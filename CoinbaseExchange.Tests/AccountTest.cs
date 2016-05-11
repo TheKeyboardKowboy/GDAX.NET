@@ -1,63 +1,50 @@
-﻿using System;
-using System.Linq;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using CoinbaseExchange.NET.Endpoints.Account;
-using CoinbaseExchange.NET;
 using CoinbaseExchange.NET.Core;
-using System.Collections.Generic;
 
-namespace CoinbaseExchange.Tests
-{
+namespace CoinbaseExchange.Tests {
     [TestClass]
-    public class AccountTest
-    {
+    public class AccountTest {
         [TestMethod]
-        public void TestListAccounts()
-        {
+        public void TestListAccounts() {
             var accounts = GetAccounts();
             // Do something with the response.
         }
 
         [TestMethod]
-        public void TestGetAccountHistory()
-        {
+        public void TestGetAccountHistory() {
             var accounts = GetAccounts().Accounts;
-            foreach (var account in accounts)
-            {
+            foreach ( var account in accounts ) {
                 var authContainer = GetAuthenticationContainer();
-                var accountClient = new AccountClient(authContainer);
-                var response = accountClient.GetAccountHistory(account.Id).Result;
+                var accountClient = new AccountClient( authContainer );
+                var response = accountClient.GetAccountHistory( account.Id ).Result;
 
-                Assert.IsTrue(response.AccountHistoryRecords != null);
+                Assert.IsTrue( response.AccountHistoryRecords != null );
             }
         }
 
         [TestMethod]
-        public void TestGetAccountHolds()
-        {
+        public void TestGetAccountHolds() {
             var accounts = GetAccounts().Accounts;
             // Do something with the response.
 
-            foreach (var account in accounts)
-            {
+            foreach ( var account in accounts ) {
                 var authContainer = GetAuthenticationContainer();
-                var accountClient = new AccountClient(authContainer);
-                var response = accountClient.GetAccountHolds(account.Id).Result;
+                var accountClient = new AccountClient( authContainer );
+                var response = accountClient.GetAccountHolds( account.Id ).Result;
 
-                Assert.IsTrue(response.AccountHolds != null);
+                Assert.IsTrue( response.AccountHolds != null );
             }
         }
 
-        private ListAccountsResponse GetAccounts()
-        {
+        private ListAccountsResponse GetAccounts() {
             var authContainer = GetAuthenticationContainer();
-            var accountClient = new AccountClient(authContainer);
+            var accountClient = new AccountClient( authContainer );
             var response = accountClient.ListAccounts().Result;
             return response;
         }
 
-        private CBAuthenticationContainer GetAuthenticationContainer()
-        {
+        private CBAuthenticationContainer GetAuthenticationContainer() {
             var authenticationContainer = new CBAuthenticationContainer(
                 "", // API Key
                 "", // Passphrase

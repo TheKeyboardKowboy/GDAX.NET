@@ -1,69 +1,60 @@
-﻿using CoinbaseExchange.NET.Core;
-using Newtonsoft.Json.Linq;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.WebSockets;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
+﻿namespace CoinbaseExchange.NET.Endpoints.OrderBook {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Net.WebSockets;
+    using System.Text;
+    using System.Threading;
+    using System.Threading.Tasks;
+    using Core;
+    using Newtonsoft.Json.Linq;
 
-namespace CoinbaseExchange.NET.Endpoints.OrderBook
-{
-    public class RealtimeOrderBookClient : ExchangeClientBase
-    {
-        private const string Product = "BTC-USD";
+    public class RealtimeOrderBookClient : ExchangeClientBase {
+        private const String Product = "BTC-USD";
+        private readonly Object _askLock = new Object();
+        private readonly Object _bidLock = new Object();
 
-        private object _spreadLock = new object();
-        private object _askLock = new object();
-        private object _bidLock = new object();
+        private readonly Object _spreadLock = new Object();
 
-        private List<BidAskOrder> _sells { get; set; }
-        private List<BidAskOrder> _buys { get; set; }
+        public RealtimeOrderBookClient( CBAuthenticationContainer auth ) : base( auth ) {
+            _sells = new List< BidAskOrder >();
+            _buys = new List< BidAskOrder >();
 
-        public List<BidAskOrder> Sells { get; set; }
-        public List<BidAskOrder> Buys { get; set; }
+            Sells = new List< BidAskOrder >();
+            Buys = new List< BidAskOrder >();
 
-        public event EventHandler Updated;
+            ResetStateWithFullOrderBook();
+        }
 
-        public decimal Spread
-        {
-            get
-            {
-                lock (_spreadLock)
-                {
-                    if (!Buys.Any() || !Sells.Any())
+        private List< BidAskOrder > _sells { get; set; }
+        private List< BidAskOrder > _buys { get; set; }
+
+        public List< BidAskOrder > Sells { get; set; }
+        public List< BidAskOrder > Buys { get; set; }
+
+        public Decimal Spread {
+            get {
+                lock ( _spreadLock ) {
+                    if ( !Buys.Any() || !Sells.Any() ) {
                         return 0;
+                    }
 
-                    var maxBuy = Buys.Select(x => x.Price).Max();
-                    var minSell = Sells.Select(x => x.Price).Min();
+                    var maxBuy = Buys.Select( x => x.Price ).Max();
+                    var minSell = Sells.Select( x => x.Price ).Min();
 
                     return minSell - maxBuy;
                 }
             }
         }
 
-        public RealtimeOrderBookClient(CBAuthenticationContainer auth) : base(auth)
-        {
-            _sells = new List<BidAskOrder>();
-            _buys = new List<BidAskOrder>();
+        public event EventHandler Updated;
 
-            Sells = new List<BidAskOrder>();
-            Buys = new List<BidAskOrder>();
+        private async void ResetStateWithFullOrderBook() {
+            var response = await GetProductOrderBook( Product, 3 );
 
-            ResetStateWithFullOrderBook();
-        }
-
-        private async void ResetStateWithFullOrderBook()
-        {
-            var response = await GetProductOrderBook(Product, 3);
-
-            lock (_spreadLock)
-            {
-                lock (_askLock)
-                {
-                    lock (_bidLock)
-                    {
+            lock ( _spreadLock ) {
+                lock ( _askLock ) {
+                    lock ( _bidLock ) {
                         _buys = response.Buys.ToList();
                         _sells = response.Sells.ToList();
 
@@ -75,100 +66,74 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 
             OnUpdated();
 
-            Subscribe(Product, OnOrderBookEventReceived);
+            Subscribe( Product, OnOrderBookEventReceived );
         }
 
-        private void OnUpdated()
-        {
-            if (Updated != null)
-                Updated(this, new EventArgs());
+        private void OnUpdated() {
+            if ( Updated != null ) {
+                Updated( this, new EventArgs() );
+            }
         }
 
-        public async Task<GetProductOrderBookResponse> GetProductOrderBook(string productId, int level = 1)
-        {
-            var request = new GetProductOrderBookRequest(productId, level);
-            var response = await this.GetResponse(request);
-            var orderBookResponse = new GetProductOrderBookResponse(response);
+        public async Task< GetProductOrderBookResponse > GetProductOrderBook( String productId, Int32 level = 1 ) {
+            var request = new GetProductOrderBookRequest( productId, level );
+            var response = await this.GetResponse( request );
+            var orderBookResponse = new GetProductOrderBookResponse( response );
             return orderBookResponse;
         }
 
-        private void OnOrderBookEventReceived(RealtimeMessage message)
-        {
-            if (message is RealtimeReceived)
-            {
+        private void OnOrderBookEventReceived( RealtimeMessage message ) {
+            if ( message is RealtimeReceived ) {
                 var receivedMessage = message as RealtimeReceived;
-                OnReceived(receivedMessage);
+                OnReceived( receivedMessage );
             }
 
-            else if (message is RealtimeOpen)
-            {
+            else if ( message is RealtimeOpen ) {}
 
-            }
-
-            else if (message is RealtimeDone)
-            {
+            else if ( message is RealtimeDone ) {
                 var doneMessage = message as RealtimeDone;
-                OnDone(doneMessage);
+                OnDone( doneMessage );
             }
 
-            else if (message is RealtimeMatch)
-            {
+            else if ( message is RealtimeMatch ) {}
 
-            }
+            else if ( message is RealtimeChange ) {}
 
-            else if (message is RealtimeChange)
-            {
-
-            }
-
-            else if (message is RealtimeOpen)
-            {
-
-            }
+            else if ( message is RealtimeOpen ) {}
 
             OnUpdated();
         }
 
-        private void OnReceived(RealtimeReceived receivedMessage)
-        {
+        private void OnReceived( RealtimeReceived receivedMessage ) {
             var order = new BidAskOrder();
 
             order.Id = receivedMessage.OrderId;
             order.Price = receivedMessage.Price;
             order.Size = receivedMessage.Size;
 
-            lock (_spreadLock)
-            {
-                if (receivedMessage.Side == "buy")
-                {
-                    lock (_bidLock)
-                    {
-                        _buys.Add(order);
+            lock ( _spreadLock ) {
+                if ( receivedMessage.Side == "buy" ) {
+                    lock ( _bidLock ) {
+                        _buys.Add( order );
                         Buys = _buys.ToList();
                     }
                 }
 
-                else if (receivedMessage.Side == "sell")
-                {
-                    lock (_askLock)
-                    {
-                        _sells.Add(order);
+                else if ( receivedMessage.Side == "sell" ) {
+                    lock ( _askLock ) {
+                        _sells.Add( order );
                         Sells = _sells.ToList();
                     }
                 }
             }
         }
 
-        private void OnDone(RealtimeDone message)
-        {
-            lock (_spreadLock)
-            {
-                lock (_askLock)
-                {
-                    lock (_bidLock)
-                    {
-                        _buys.RemoveAll(b => b.Id == message.OrderId);
-                        _sells.RemoveAll(a => a.Id == message.OrderId);
+        private void OnDone( RealtimeDone message ) {
+            lock ( _spreadLock ) {
+                lock ( _askLock ) {
+                    lock ( _bidLock ) {
+                        _buys.RemoveAll( b => b.Id == message.OrderId );
+                        _sells.RemoveAll( a => a.Id == message.OrderId );
 
                         Buys = _buys.ToList();
                         Sells = _sells.ToList();
@@ -177,68 +142,71 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
             }
         }
 
-        private static async void Subscribe(string product, Action<RealtimeMessage> onMessageReceived)
-        {
-            if (String.IsNullOrWhiteSpace(product))
-                throw new ArgumentNullException("product");
+        private static async void Subscribe( String product, Action< RealtimeMessage > onMessageReceived ) {
+            if ( String.IsNullOrWhiteSpace( product ) ) {
+                throw new ArgumentNullException( nameof( product ) );
+            }
 
-            if (onMessageReceived == null)
-                throw new ArgumentNullException("onMessageReceived", "Message received callback must not be null.");
+            if ( onMessageReceived == null ) {
+                throw new ArgumentNullException( nameof( onMessageReceived ), "Message received callback must not be null." );
+            }
 
-            var uri = new Uri("wss://ws-feed.exchange.coinbase.com");
+            var uri = new Uri( "wss://ws-feed.exchange.coinbase.com" );
             var webSocketClient = new ClientWebSocket();
             var cancellationToken = new CancellationToken();
-            var requestString = String.Format(@"{{""type"": ""subscribe"",""product_id"": ""{0}""}}", product);
-            var requestBytes = UTF8Encoding.UTF8.GetBytes(requestString);
-            await webSocketClient.ConnectAsync(uri, cancellationToken);
+            var requestString = String.Format( @"{{""type"": ""subscribe"",""product_id"": ""{0}""}}", product );
+            var requestBytes = Encoding.UTF8.GetBytes( requestString );
+            await webSocketClient.ConnectAsync( uri, cancellationToken );
 
-            if (webSocketClient.State == WebSocketState.Open)
-            {
-                var subscribeRequest = new ArraySegment<byte>(requestBytes);
+            if ( webSocketClient.State == WebSocketState.Open ) {
+                var subscribeRequest = new ArraySegment< Byte >( requestBytes );
                 var sendCancellationToken = new CancellationToken();
-                await webSocketClient.SendAsync(subscribeRequest, WebSocketMessageType.Text, true, sendCancellationToken);
+                await webSocketClient.SendAsync( subscribeRequest, WebSocketMessageType.Text, true, sendCancellationToken );
 
-                while (webSocketClient.State == WebSocketState.Open)
-                {
+                while ( webSocketClient.State == WebSocketState.Open ) {
                     var receiveCancellationToken = new CancellationToken();
-                    var receiveBuffer = new ArraySegment<byte>(new byte[1024 * 1024 * 5]); // 5MB buffer
-                    var webSocketReceiveResult = await webSocketClient.ReceiveAsync(receiveBuffer, receiveCancellationToken);
-                    if (webSocketReceiveResult.Count == 0) continue;
+                    var receiveBuffer = new ArraySegment< Byte >( new Byte[ 1024 * 1024 * 5 ] ); // 5MB buffer
+                    var webSocketReceiveResult = await webSocketClient.ReceiveAsync( receiveBuffer, receiveCancellationToken );
+                    if ( webSocketReceiveResult.Count == 0 ) {
+                        continue;
+                    }
 
-                    var jsonResponse = Encoding.UTF8.GetString(receiveBuffer.Array, 0, webSocketReceiveResult.Count);
-                    var jToken = JToken.Parse(jsonResponse);
+                    var jsonResponse = Encoding.UTF8.GetString( receiveBuffer.Array, 0, webSocketReceiveResult.Count );
+                    var jToken = JToken.Parse( jsonResponse );
 
-                    var typeToken = jToken["type"];
-                    if (typeToken == null) continue;
+                    var typeToken = jToken[ "type" ];
+                    if ( typeToken == null ) {
+                        continue;
+                    }
 
-                    var type = typeToken.Value<string>();
+                    var type = typeToken.Value< String >();
                     RealtimeMessage realtimeMessage = null;
 
-                    switch (type)
-                    {
+                    switch ( type ) {
                         case "received":
-                            realtimeMessage = new RealtimeReceived(jToken);
+                            realtimeMessage = new RealtimeReceived( jToken );
                             break;
                         case "open":
-                            realtimeMessage = new RealtimeOpen(jToken);
+                            realtimeMessage = new RealtimeOpen( jToken );
                             break;
                         case "done":
-                            realtimeMessage = new RealtimeDone(jToken);
+                            realtimeMessage = new RealtimeDone( jToken );
                             break;
                         case "match":
-                            realtimeMessage = new RealtimeMatch(jToken);
+                            realtimeMessage = new RealtimeMatch( jToken );
                             break;
                         case "change":
-                            realtimeMessage = new RealtimeChange(jToken);
+                            realtimeMessage = new RealtimeChange( jToken );
                             break;
                         default:
                             break;
                     }
 
-                    if (realtimeMessage == null)
+                    if ( realtimeMessage == null ) {
                         continue;
+                    }
 
-                    onMessageReceived(realtimeMessage);
+                    onMessageReceived( realtimeMessage );
                 }
             }
         }
