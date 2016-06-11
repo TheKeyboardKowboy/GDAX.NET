@@ -1,12 +1,12 @@
-# CoinbaseExchange.NET
+# GDAX.NET
 
-A C# wrapper around the exchange.coinbase.com REST API
+A C# wrapper around the api.gdax.com REST API
 
 This project is a work in progress.
 
 ## Dependencies
 
-* .NET Framework v4.5.1
+* .NET Framework v4.6.1
 * JSON.NET (via NuGet use: Install-Package Newtonsoft.JSON)
 
 
