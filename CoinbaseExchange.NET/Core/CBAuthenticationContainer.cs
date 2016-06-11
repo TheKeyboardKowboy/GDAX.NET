@@ -28,8 +28,8 @@
         public String Passphrase { get; private set; }
 
         public String ComputeSignature( String timestamp, String relativeUrl, String method, String body ) {
-            var data = Convert.FromBase64String( this._secret );
             var prehash = timestamp + method + relativeUrl + body;
+            var data = Convert.FromBase64String( this._secret );
             return HashString( prehash, data );
         }
 

@@ -13,9 +13,7 @@
         public String RequestUrl { get; protected set; }
         public String RequestBody { get; protected set; }
 
-        public Boolean IsExpired {
-            get { return ( GetCurrentUnixTimeStamp() - TimeStamp ) >= 30; }
-        }
+        public Boolean IsExpired => this.GetCurrentUnixTimeStamp() - this.TimeStamp >= 30;
 
         protected virtual Double GetCurrentUnixTimeStamp() { return DateTime.UtcNow.ToUnixTimestamp(); }
     }

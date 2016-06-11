@@ -52,8 +52,8 @@
             var transferIdToken = details[ "transfer_id" ];
             var transferTypeToken = details[ "transfer_type" ];
 
-            this.TransferId = transferIdToken == null ? null : transferIdToken.Value< String >();
-            this.TransferType = transferTypeToken == null ? null : transferTypeToken.Value< String >();
+            this.TransferId = transferIdToken?.Value< String >();
+            this.TransferType = transferTypeToken?.Value< String >();
         }
 
         public String TransferId { get; set; }

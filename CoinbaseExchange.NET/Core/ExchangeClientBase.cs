@@ -6,7 +6,8 @@
     using System.Threading.Tasks;
 
     public abstract class ExchangeClientBase {
-        public const String API_ENDPOINT_URL = "https://api.exchange.coinbase.com/";
+        public const String API_ENDPOINT_URL = "https://api.gdax.com/";
+
         private const String ContentType = "application/json";
 
         private readonly CBAuthenticationContainer _authContainer;

@@ -8,7 +8,7 @@
                 throw new ArgumentNullException( nameof( accountId ) );
             }
 
-            var urlFormat = String.Format( "/accounts/{0}/ledger", accountId );
+            var urlFormat = $"/accounts/{accountId}/ledger";
             this.RequestUrl = urlFormat;
         }
     }
