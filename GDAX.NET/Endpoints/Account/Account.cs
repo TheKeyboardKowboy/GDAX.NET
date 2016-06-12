@@ -14,5 +14,7 @@
         public Decimal Balance { get; set; }
         public Decimal Available { get; set; }
         public String Currency { get; set; }
+
+        public override String ToString() { return $"{this.Available:F8} {this.Currency}"; }
     }
 }

@@ -3,7 +3,9 @@
     using System.Linq;
 
     public abstract class ExchangePageableResponseBase {
+
         protected ExchangePageableResponseBase( ExchangeResponse response ) {
+
             var beforeHeader = response.Headers.LastOrDefault( x => x.Key != null && x.Key.ToUpper() == "CB-BEFORE" );
             var afterHeader = response.Headers.LastOrDefault( x => x.Key != null && x.Key.ToUpper() == "CB-AFTER" );
 

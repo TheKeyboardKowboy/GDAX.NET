@@ -12,6 +12,6 @@
             this.Accounts = jArray.Select( elem => new Account( elem ) ).ToList();
         }
 
-        public IEnumerable< Account > Accounts { get; private set; }
+        public List< Account > Accounts { get; private set; }
     }
 }

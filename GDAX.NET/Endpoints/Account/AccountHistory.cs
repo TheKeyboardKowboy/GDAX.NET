@@ -23,6 +23,8 @@
         public Decimal Balance { get; set; }
         public String Type { get; set; }
 
+        public override String ToString() { return $"{this.TimeStamp.ToLongDateString()} {this.TimeStamp.ToLongTimeString()} {this.Id} {this.Amount:F8} {this.Type} {this.Balance:F8}"; }
+
         public static AccountHistory FromJToken( JToken jToken ) {
             var type = jToken[ "type" ].Value< String >().ToLower();
             switch ( type ) {
@@ -41,22 +43,4 @@
         match 	Funds moved as a result of a trade
         fee 	Fee or rebate as a result of a trade
      */
-
-    public class AccountHistoryTransfer : AccountHistory {
-        public AccountHistoryTransfer( JToken jToken ) : base( jToken ) {
-            if ( this.Type != "transfer" ) {
-                throw new InvalidOperationException( "Transfer record can only be created from a valid transfer type json object" );
-            }
-
-            var details = jToken[ "details" ];
-            var transferIdToken = details[ "transfer_id" ];
-            var transferTypeToken = details[ "transfer_type" ];
-
-            this.TransferId = transferIdToken?.Value< String >();
-            this.TransferType = transferTypeToken?.Value< String >();
-        }
-
-        public String TransferId { get; set; }
-        public String TransferType { get; set; }
-    }
 }

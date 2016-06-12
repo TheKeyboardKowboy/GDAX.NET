@@ -1,14 +1,18 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-
-namespace CoinbaseExchange.Tests {
+﻿namespace CoinbaseExchange.Tests {
+    using System;
     using GDAX.NET.Core;
     using GDAX.NET.Endpoints.Account;
+    using Microsoft.VisualStudio.TestTools.UnitTesting;
 
     [TestClass]
     public class AccountTest {
+
         [TestMethod]
         public void TestListAccounts() {
             var accounts = GetAccounts();
+            foreach ( var account in accounts.Accounts ) {
+                Console.WriteLine( "{0:F8} {1} available", account.Available, account.Currency );
+            }
             // Do something with the response.
         }
 
@@ -46,11 +50,11 @@ namespace CoinbaseExchange.Tests {
         }
 
         private CBAuthenticationContainer GetAuthenticationContainer() {
-            var authenticationContainer = new CBAuthenticationContainer(
-                "", // API Key
-                "", // Passphrase
-                ""  // Secret
-            );
+            var passphrase = Configuration.Ask( Configuration.Passphrase, "What is the passphrase?" );
+            var apikey = Configuration.Ask( Configuration.Apikey, "What is the API key?" );
+            var secret = Configuration.Ask( Configuration.Secret, "What is the secret?" );
+
+            var authenticationContainer = new CBAuthenticationContainer( apiKey: apikey, passphrase: passphrase, secret: secret );
 
             return authenticationContainer;
         }

@@ -12,6 +12,6 @@
             this.AccountHistoryRecords = jArray.Select( AccountHistory.FromJToken ).ToList();
         }
 
-        public IEnumerable< AccountHistory > AccountHistoryRecords { get; private set; }
+        public List< AccountHistory > AccountHistoryRecords { get; private set; }
     }
 }
