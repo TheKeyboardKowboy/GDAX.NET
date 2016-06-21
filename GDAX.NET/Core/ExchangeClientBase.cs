@@ -12,7 +12,7 @@
 
         private readonly CBAuthenticationContainer _authContainer;
 
-        public ExchangeClientBase( CBAuthenticationContainer authContainer ) { this._authContainer = authContainer; }
+        protected ExchangeClientBase( CBAuthenticationContainer authContainer ) { this._authContainer = authContainer; }
 
         protected async Task< ExchangeResponse > GetResponse( ExchangeRequestBase request ) {
             var relativeUrl = request.RequestUrl;
